@@ -110,6 +110,8 @@ if __name__ == '__main__':
 		for date, date_work in entries:
 			total += date_work
 		print("Total %.2f h" % (total.total_seconds() / (60.0*60)))
+	elif args.command == "ts":
+		xm_rst_log.log_echo(xm_rst_log.log_ts())
 	else:
 		raise NotImplementedError(args)
 
