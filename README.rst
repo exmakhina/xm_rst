@@ -25,13 +25,22 @@ Simply:
 
 .. code:: bash
 
-   mkdir -p ~/.local/opt
+   mkdir -p ~/.local/opt{,/bin}
    pushd ~/.local/opt
    git clone ...
+   pushd bin
+   ln -sf ../xm_rst/xm_rst.py xm_rst
+   popd
    popd
 
 
-And you can add to your environment:
+And you can add to your environment, if not already there:
+
+.. code:: bash
+
+   PATH+=~/.local/opt/bin
+
+And some command-line completion:
 
 .. code:: bash
 
