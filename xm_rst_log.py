@@ -63,8 +63,12 @@ def log_day_consulting(name=None):
 		name = getpass.getuser()
 
 	return "".join([
-	 log_date_header(),
 	 "\n\n",
+	 ".. raw:: latex\n",
+	 "\n",
+	 "   \\newpage\n",
+	 log_date_header(),
+	 "\n",
 	 log_admonition("TODO"),
 	 "- TODO\n\n",
 	 log_admonition("Hours - %s" % name),
@@ -74,9 +78,7 @@ def log_day_consulting(name=None):
 	 ":Worked: - %s: TODO\n\n" % name,
 	 log_heading("+", "The Plan"),
 	 "TODO\n\n",
-	 log_heading("+", "The WIP"),
-	 "TODO\n\n",
-	 log_heading("+", "The Retrospective"),
+	 log_heading("+", "WIP Notes"),
 	 "TODO\n\n",
 	 ])
 
