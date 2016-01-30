@@ -18,8 +18,10 @@ def log_echo(txt):
 	assert res == 0
 	print(txt)
 
-def log_uuid():
-	guid = uuid.uuid1(node=0x092120172)
+def log_uuid(node=None):
+	if node is None:
+		node = 0x092120172 # TODO FIXME
+	guid = uuid.uuid1(node=node)
 	s = "%s" % guid
 	return s
 
@@ -35,21 +37,21 @@ def log_heading(decorator, title):
 	underline = len(title) * decorator
 	return "\n%s\n%s\n\n" % (title, underline)
 
-def log_date_header(d=None):
-	d = d or datetime.datetime.now()
-	return log_heading("=", d.strftime("%Y-%m-%d (%a)"))
+def log_date_header(when=None):
+	when = when or datetime.datetime.now()
+	return log_heading("=", when.strftime("%Y-%m-%d (%a)"))
 
-def log_timestamp(d=None):
-	d = d or datetime.datetime.now()
-	return d.strftime("%Y-%m-%dT%H:%M:%S")
+def log_timestamp(when=None):
+	when = when or datetime.datetime.now()
+	return when.strftime("%Y-%m-%dT%H:%M:%S")
 
-def log_ts(d=None):
-	d = d or datetime.datetime.now()
-	return ":time:`%s`" % d.strftime("%H:%M:%S")
+def log_ts(when=None):
+	when = when or datetime.datetime.now()
+	return ":time:`%s`" % when.strftime("%H:%M:%S")
 
-def log_day():
+def log_day(when=None):
 	return "".join([
-	 log_date_header(),
+	 log_date_header(when=when),
 	 "\n\n",
 	 log_admonition("TODO"),
 	 "- TODO\n\n",
@@ -57,7 +59,7 @@ def log_day():
 	 "- TODO\n\n"
 	])
 
-def log_day_consulting(name=None):
+def log_day_consulting(when=None, name=None):
 	if name is None:
 		import getpass
 		name = getpass.getuser()
@@ -67,7 +69,7 @@ def log_day_consulting(name=None):
 	 ".. raw:: latex\n",
 	 "\n",
 	 "   \\newpage\n",
-	 log_date_header(),
+	 log_date_header(when=when),
 	 "\n",
 	 log_admonition("TODO"),
 	 "- TODO\n\n",

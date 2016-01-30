@@ -54,6 +54,15 @@ if __name__ == '__main__':
 	 help="",
 	)
 
+	parser_log.add_argument("--when",
+	 type=datetimeparse.parse_date,
+	 help="date to consider",
+	)
+
+	parser_log.add_argument("--name",
+	 help="name to consider",
+	)
+
 	parser_timesheet = subparsers.add_parser(
 	 'timesheet',
 	 help="manage timesheet stuff (eg. counting hours)",
@@ -85,7 +94,18 @@ if __name__ == '__main__':
 	import xm_rst_to_timesheet_estimation
 
 	if args.command == 'log':
-		xm_rst_log.log_echo(getattr(xm_rst_log, "log_" + args.logcommand)())
+		f = getattr(xm_rst_log, "log_" + args.logcommand)
+		type_xform = {
+		 "when": lambda x: x,
+		 "name": str,
+		}
+		d = dict()
+		for k, xform in type_xform.items():
+			v = getattr(args, k)
+			if v is not None:
+				d[k] = xform(v)
+		s = f(**d)
+		xm_rst_log.log_echo(s)
 	elif args.command == "timesheet":
 		entries = []
 		for date_range in args.range:
