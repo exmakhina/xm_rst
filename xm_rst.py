@@ -5,6 +5,7 @@
 
 import sys, argparse, re, datetime
 
+import datetimeparse
 
 def printf(x):
 	sys.stdout.write(x)
@@ -15,30 +16,13 @@ def ts_range(x):
 		t_a = datetime.datetime.now() - datetime.timedelta(days=7)
 		t_b = datetime.datetime.now()
 	else:
-		m = re.match("(?P<ta>\S+) to (?P<tb>\S+)", x)
+		m = re.match("(?P<ta>.*) to (?P<tb>.*)", x)
 		assert m is not None
 		tsa = m.group("ta")
 		tsb = m.group("tb")
-		def parse_date(ts):
-			t = None
-			if t is None and ts == "now":
-				t = datetime.datetime.now()
-			if t is None and ts == "yesterday":
-				t = datetime.datetime.now()-datetime.timedelta(days=1)
 
-			if t is None:
-				try:
-					t = datetime.datetime.strptime(ts, "%Y-%m-%d")
-				except ValueError:
-					pass
-
-			if t is None:
-				raise NotImplementedError()
-
-			return t
-
-		t_a = parse_date(tsa)
-		t_b = parse_date(tsb)
+		t_a = datetimeparse.parse_date(tsa)
+		t_b = datetimeparse.parse_date(tsb)
 
 	return t_a, t_b
 
@@ -107,7 +91,9 @@ if __name__ == '__main__':
 		for date_range in args.range:
 			entries += xm_rst_to_timesheet_estimation.process(args.filename, date_range)
 		total = datetime.timedelta()
+		print("Entries:")
 		for date, date_work in entries:
+			print("- %s: %s" % (date.strftime("%Y-%m-%d"), datetimeparse.timedelta_str(date_work)))
 			total += date_work
 		print("Total %.2f h" % (total.total_seconds() / (60.0*60)))
 	elif args.command == "ts":

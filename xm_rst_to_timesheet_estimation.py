@@ -10,6 +10,8 @@ import docutils.utils
 import docutils.parsers.rst
 import docutils.frontend
 
+import datetimeparse
+
 def process(filename, date_range):
 	settings = docutils.frontend.OptionParser(
 	 components=(docutils.parsers.rst.Parser,)) \
@@ -126,11 +128,7 @@ def process(filename, date_range):
 
 					assert False, p
 
-				#print(dayjob)				
-				ts = dayjob.total_seconds()
-				h = ts//3600
-				m = ts//60 - h*60
-				print("  - Day total: %2d:%02d" % (h, m))
+				print("  - Day total: %s" % datetimeparse.timedelta_str(dayjob))
 
 		def depart(self, node):
 			print(node)
