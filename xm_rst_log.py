@@ -52,7 +52,7 @@ def log_ts(when=None):
 def log_day(when=None):
 	return "".join([
 	 log_date_header(when=when),
-	 "\n\n",
+	 "\n",
 	 log_admonition("TODO"),
 	 "- TODO\n\n",
 	 log_admonition("Done"),
