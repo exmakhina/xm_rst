@@ -50,7 +50,7 @@ if __name__ == '__main__':
 	)
 
 	parser_log.add_argument("logcommand",
-    choices=choices,
+	 choices=choices,
 	 help="",
 	)
 
@@ -82,6 +82,28 @@ if __name__ == '__main__':
 	 'ts',
 	 help="shortcut for 'log ts' to produce a timestamp",
 	)
+
+
+	parser_cb = subparsers.add_parser(
+	 'clipboard',
+	 help="manage clipboard",
+	)
+
+	parser_cb_sp = parser_cb.add_subparsers(
+	 help='the clipboard command; type "%s clipboard COMMAND -h" for command-specific help' % sys.argv[0],
+	 dest='cb_command',
+	)
+
+	parser_cb_quote = parser_cb_sp.add_parser(
+	 'quote',
+	 help="prefix clipboard lines with \"> \"",
+	)
+
+	parser_cb_stats = parser_cb_sp.add_parser(
+	 'stats',
+	 help="statistics on clipboard contents",
+	)
+
 
 	try:
 		import argcomplete
@@ -118,7 +140,31 @@ if __name__ == '__main__':
 		print("Total %.2f h" % (total.total_seconds() / (60.0*60)))
 	elif args.command == "ts":
 		xm_rst_log.log_echo(xm_rst_log.log_ts())
+	elif args.command == "clipboard":
+		if args.cb_command == "stats":
+			import subprocess
+			cmd = "xclip -selection primary -out".split()
+			lines = subprocess.check_output(cmd).decode().splitlines()
+			lines = [x for x in lines if x != ""]
+			words = 0
+			for line in lines:
+				words += len(line.split())
+			print("Lines: %d" % len(lines))
+			print("Words: %d" % words)
+		elif args.cb_command == "quote":
+			import subprocess
+			cmd = "xclip -selection primary -out".split()
+			out = subprocess.check_output(cmd)
+			txt = b"> " + out.replace(b"\n", b"\n> ")
+			cmd = "xclip -selection clipboard".split()
+			proc = subprocess.Popen(cmd, stdin=subprocess.PIPE)
+			proc.stdin.write(txt)
+			proc.stdin.close()
+			res = proc.wait()
+			assert res == 0
+			print(txt)
+		else:
+			raise NotImplementedError(args)
 	else:
 		raise NotImplementedError(args)
-
 
