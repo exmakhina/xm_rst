@@ -2,6 +2,8 @@
 # -*- coding: utf-8 vi:noet
 # Parse and pretty-print functions for datetime or timedelta
 
+# TODO try to use isodate
+
 __author__ = "Jérôme Carretero <cJ@zougloub.eu>"
 __license__ = "MIT"
 
@@ -80,9 +82,12 @@ def parse_date(spec):
 					out = out.replace(hour=13, minute=00, second=0)
 					break
 
-				if 'morning' in spec or 1:
+				if 'morning' in spec:
 					out = out.replace(hour=9, minute=30, second=0)
 					break
+
+				out = out.replace(hour=0, minute=0, second=0, microsecond=0)
+				break
 
 		return out
 
