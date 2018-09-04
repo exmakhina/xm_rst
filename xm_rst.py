@@ -3,7 +3,7 @@
 # PYTHON_ARGCOMPLETE_OK
 # ExMakhina reStructuredText timesheets stuff
 
-import sys, argparse, re, datetime
+import sys, argparse, re, datetime, decimal, logging
 
 import datetimeparse
 
@@ -68,10 +68,19 @@ if __name__ == '__main__':
 	 help="manage timesheet stuff (eg. counting hours)",
 	)
 
+	parser_timesheet.add_argument("--rate",
+	 type=decimal.Decimal,
+	 help="hourly rate",
+	)
+
 	parser_timesheet.add_argument("--range",
 	 type=ts_range,
 	 action="append",
 	 help="[a,b[ range to consider (can be repeated)",
+	)
+
+	parser_timesheet.add_argument("--match",
+	 help="Only match entries matching this regexp",
 	)
 
 	parser_timesheet.add_argument("filename",
@@ -128,16 +137,37 @@ if __name__ == '__main__':
 				d[k] = xform(v)
 		s = f(**d)
 		xm_rst_log.log_echo(s)
+
 	elif args.command == "timesheet":
-		entries = []
+		total_times = list()
+		total_matxs = list()
 		for date_range in args.range:
-			entries += xm_rst_to_timesheet_estimation.process(args.filename, date_range)
-		total = datetime.timedelta()
-		print("Entries:")
-		for date, date_work in entries:
-			print("- %s: %s" % (date.strftime("%Y-%m-%d"), datetimeparse.timedelta_str(date_work)))
-			total += date_work
-		print("Total %.2f h" % (total.total_seconds() / (60.0*60)))
+			if args.match:
+				def match(x):
+					return re.match(args.match, x) is not None
+			else:
+				match = lambda x: True
+
+			times, matxs = xm_rst_to_timesheet_estimation.process(args.filename, date_range, match)
+			total_times += times
+			total_matxs += matxs
+		total_time = datetime.timedelta()
+		print("Time Entries:")
+		for date, date_work, comment in total_times:
+			print("- %s: %s %s" % (date.strftime("%Y-%m-%d"), datetimeparse.timedelta_str(date_work), comment))
+			total_time += date_work
+		total_matx = decimal.Decimal(0)
+		print("Materials Entries:")
+		for date, date_mats in total_matxs:
+			print("- %s: %s" % (date.strftime("%Y-%m-%d"), date_mats))
+			total_matx += date_mats
+		hours = total_time.total_seconds() / (60.0*60)
+		note = ""
+		if args.rate:
+			note = " (%s)" % (decimal.Decimal(hours) * args.rate)
+		print("Time Total %.2f h%s" % (hours, note))
+		print("Materials Total %s" % (total_matx))
+
 	elif args.command == "ts":
 		xm_rst_log.log_echo(xm_rst_log.log_ts())
 	elif args.command == "clipboard":
