@@ -2,7 +2,7 @@
 # -*- coding: utf-8 vi:noet
 # Parse and pretty-print functions for datetime or timedelta
 
-# TODO try to use isodate
+# TODO try to use isodate or dateutil
 
 __author__ = "Jérôme Carretero <cJ@zougloub.eu>"
 __license__ = "MIT"
