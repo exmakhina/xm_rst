@@ -51,7 +51,7 @@ def process(filename, date_range, match=lambda x: True):
 
 			if node.__class__ == docutils.nodes.admonition:
 				title = node.children[0].rawsource
-				if not title.startswith("Hours"):
+				if not title.startswith("Hours - "):
 					return
 
 				assert self.date is not None, "Sonna bakana!"
@@ -195,7 +195,8 @@ def process(filename, date_range, match=lambda x: True):
 						v = decimal.Decimal(m.group("amount"))
 						day_exp += v
 						print("    - %s: %s" % (v, pr))
-						self.entries.append((self.date, v))
+						if self.date >= self.min_date and self.date <= self.max_date:
+							self.entries.append((self.date, v))
 						continue
 
 					assert False, p
