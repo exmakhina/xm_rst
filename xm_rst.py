@@ -76,6 +76,7 @@ if __name__ == '__main__':
 	parser_timesheet.add_argument("--range",
 	 type=ts_range,
 	 action="append",
+	 required=True,
 	 help="[a,b[ range to consider (can be repeated)",
 	)
 
@@ -122,8 +123,6 @@ if __name__ == '__main__':
 
 	args = parser.parse_args()
 
-	import xm_rst_to_timesheet_estimation
-
 	if args.command == 'log':
 		f = getattr(xm_rst_log, "log_" + args.logcommand)
 		type_xform = {
@@ -139,6 +138,7 @@ if __name__ == '__main__':
 		xm_rst_log.log_echo(s)
 
 	elif args.command == "timesheet":
+		import xm_rst_to_timesheet_estimation
 		total_times = list()
 		total_matxs = list()
 		for date_range in args.range:
