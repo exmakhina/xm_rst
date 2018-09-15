@@ -93,10 +93,10 @@ def process(filename, date_range, match=lambda x: True):
 							t = self.max_date
 
 						dt = t-f
-						dayjob += dt
 						logging.debug("    - %s: %s" % (dt, pr))
 
 						if t > f and match(m.group("comment")):
+							dayjob += dt
 							print("    - %s: %s" % (dt, pr))
 							self.entries.append((self.date, dt, pr))
 						continue
@@ -119,10 +119,10 @@ def process(filename, date_range, match=lambda x: True):
 							t = self.max_date
 
 						dt = t-f
-						dayjob += dt
 						logging.debug("    - %s: %s" % (dt, pr))
 
 						if t > f and match(m.group("comment")):
+							dayjob += dt
 							print("    - %s: %s" % (dt, pr))
 							self.entries.append((self.date, dt, pr))
 						continue
@@ -135,8 +135,8 @@ def process(filename, date_range, match=lambda x: True):
 						m_ = float(d.get("m", 0) or 0)
 						dt = datetime.timedelta(hours=h_, minutes=m_)
 						logging.debug("    - %s: %s" % (dt, pr))
-						dayjob += dt
 						if self.date >= self.min_date and self.date <= self.max_date and match(m.group("comment")):
+							dayjob += dt
 							print("    - %s: %s" % (dt, pr))
 							self.entries.append((self.date, dt, pr))
 						continue
