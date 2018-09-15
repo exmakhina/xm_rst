@@ -41,13 +41,19 @@ def process(filename, date_range, match=lambda x: True):
 			#print(node)
 			if node.__class__ == docutils.nodes.section:
 				title = node.children[0].rawsource
-				m = re.match(r"(?P<y>\d{4})-(?P<m>\d{2})-(?P<d>\d{2}) \((Mon|Tue|Wed|Thu|Fri|Sat|Sun)\)", title)
+				m = re.match(r"(?P<y>\d{4})-(?P<m>\d{2})-(?P<d>\d{2}) \((?P<weekday>Mon|Tue|Wed|Thu|Fri|Sat|Sun)\)", title)
 				if m is None:
 					#print("Skipping %s" % title)
 					return
 				def toi(x): return int(m.group(x))
 				self.date = datetime.datetime(year=toi("y"), month=toi("m"), day=toi("d"))
 				self.date = self.date.replace(second=1)
+
+				# Validate day
+				weekdays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+				weekday = weekdays.index(m.group("weekday"))
+				assert weekday == self.date.weekday(), "Wrong date: {}, DoW should be {}".format(title, self.date.weekday())
+
 
 			if node.__class__ == docutils.nodes.admonition:
 				title = node.children[0].rawsource
