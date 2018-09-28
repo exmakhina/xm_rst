@@ -101,7 +101,7 @@ def process(filename, date_range, match=lambda x: True):
 							self.entries.append((self.date, dt, pr))
 						continue
 
-					re_a = r"^From :time:`(?P<from>\d{2}:\d{2})` to :time:`(?P<to>\d{2}:\d{2})`,?(?P<comment>.*)$"
+					re_a = r"^From :time:`(?P<from>\d{2}:\d{2})` to :time:`(?P<to>\d{2}:\d{2})`( less :time:`((?P<h>\d+(\.\d+)?)h)?((?P<m>\d+)m?)?`)?,?(?P<comment>.*)$"
 					m = re.match(re_a, p)
 					if m is not None:
 						tsf = m.group("from")
@@ -119,6 +119,11 @@ def process(filename, date_range, match=lambda x: True):
 							t = self.max_date
 
 						dt = t-f
+						d = dict(m.groupdict())
+						h_ = float(d.get('h', 0) or 0)
+						m_ = float(d.get("m", 0) or 0)
+						dt -= datetime.timedelta(hours=h_, minutes=m_)
+
 						logging.debug("    - %s: %s" % (dt, pr))
 
 						if t > f and match(m.group("comment")):
