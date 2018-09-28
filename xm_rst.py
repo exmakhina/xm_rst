@@ -36,8 +36,8 @@ if __name__ == '__main__':
 	import xm_rst_log
 	choices = []
 	for x in dir(xm_rst_log):
-	   if x.startswith("log_"):
-		  choices.append(x[4:])
+		if x.startswith("log_"):
+			choices.append(x[4:])
 
 	subparsers = parser.add_subparsers(
 	 help='the command; type "%s COMMAND -h" for command-specific help' % sys.argv[0],
