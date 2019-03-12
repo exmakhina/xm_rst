@@ -72,7 +72,7 @@ def process(filename, date_range, match=lambda x: True):
 				for entry in entries:
 					if len(entry.children) != 1 \
 					 or entry.children[0].__class__ != docutils.nodes.paragraph:
-						raise RuntimeError("Entry should be a single paragraph, not {} in {}".format(entry.children[0].__class__, entry.children[0].rawsource))
+						raise RuntimeError("Entry should be a single paragraph, not {} in {}\n {}".format(entry.children[0].__class__, self.date, entry.children[0].rawsource))
 
 					pr = entry.children[0].rawsource
 					p = pr.replace("\n", " ")#.splitlines()[0]
