@@ -12,7 +12,7 @@ def printf(x):
 def log_echo(txt):
 	cmd = "xclip -selection clipboard".split()
 	proc = subprocess.Popen(cmd, stdin=subprocess.PIPE)
-	proc.stdin.write(txt)
+	proc.stdin.write(txt.encode("utf-8"))
 	proc.stdin.close()
 	res = proc.wait()
 	assert res == 0
@@ -59,10 +59,13 @@ def log_nuuid(node=None):
 	#print(binascii.hexlify(node))
 	s = dts + node
 	s = base64.b32encode(s)[:-4]
-	return s
+	return s.decode()
 
-def log_admonition(a):
-	s = ".. admonition:: %s\n\n   " % a
+def log_admonition(a, **kw):
+	s = ".. admonition:: {}\n".format(a)
+	for k, v in kw.items():
+		s += "   :{}: {}\n".format(k, v)
+	s += "\n   "
 	return s
 
 def log_requirement():
@@ -71,7 +74,11 @@ def log_requirement():
 
 def log_requirement2():
 	x = log_nuuid()
-	return log_admonition("Requirement :reqid:`%s`" % x)
+	return log_admonition("Requirement :reqid:`%s`" % x, **{
+	 "class": "requirement",
+	 "name": x,
+	 },
+	)
 
 def log_req(name="Requirement"):
 	x = log_nuuid()
