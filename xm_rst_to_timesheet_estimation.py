@@ -12,6 +12,10 @@ import docutils.frontend
 
 import datetimeparse
 
+
+logger = logging.getLogger(__name__)
+
+
 def process(filename, date_range, match_title=lambda x: True, match=lambda x: True):
 	settings = docutils.frontend.OptionParser(
 	 components=(docutils.parsers.rst.Parser,)) \
@@ -30,20 +34,20 @@ def process(filename, date_range, match_title=lambda x: True, match=lambda x: Tr
 			self.date_range = date_range
 			self.min_date = date_range[0]
 			self.max_date = date_range[1]
-			print(self.min_date)
-			print(self.max_date)
+			logger.debug(self.min_date)
+			logger.debug(self.max_date)
 
 		def visit(self, node):
-			#print(node)
+			#logger.debug(node)
 			pass
 
 		def dispatch_visit(self, node):
-			#print(node)
+			#logger.debug(node)
 			if node.__class__ == docutils.nodes.section:
 				title = node.children[0].rawsource
 				m = re.match(r"(?P<y>\d{4})-(?P<m>\d{2})-(?P<d>\d{2}) \((?P<weekday>Mon|Tue|Wed|Thu|Fri|Sat|Sun)\)", title)
 				if m is None:
-					#print("Skipping %s" % title)
+					#logger.debug("Skipping %s" % title)
 					return
 				def toi(x): return int(m.group(x))
 				self.date = datetime.datetime(year=toi("y"), month=toi("m"), day=toi("d"))
@@ -61,14 +65,14 @@ def process(filename, date_range, match_title=lambda x: True, match=lambda x: Tr
 					return
 
 				assert self.date is not None, "Sonna bakana!"
-				print("- %s" % self.date.strftime("%Y-%m-%d"))
+				logger.debug("- %s" % self.date.strftime("%Y-%m-%d"))
 
 				assert node.children[1].__class__ == docutils.nodes.bullet_list, node.children[1]
 				entries = node.children[1].children
 
 				dayjob = datetime.timedelta()
 
-				print("  - Entries:")
+				logger.debug("  - Entries:")
 				for entry in entries:
 					if len(entry.children) != 1 \
 					 or entry.children[0].__class__ != docutils.nodes.paragraph:
@@ -99,7 +103,7 @@ def process(filename, date_range, match_title=lambda x: True, match=lambda x: Tr
 
 						if t > f and match(m.group("comment")):
 							dayjob += dt
-							print("    - %s: %s" % (dt, pr))
+							logger.debug("    - %s: %s" % (dt, pr))
 							self.entries.append((self.date, dt, pr))
 						continue
 
@@ -130,7 +134,7 @@ def process(filename, date_range, match_title=lambda x: True, match=lambda x: Tr
 
 						if t > f and match(m.group("comment")):
 							dayjob += dt
-							print("    - %s: %s" % (dt, pr))
+							logger.debug("    - %s: %s" % (dt, pr))
 							self.entries.append((self.date, dt, pr))
 						continue
 
@@ -144,16 +148,16 @@ def process(filename, date_range, match_title=lambda x: True, match=lambda x: Tr
 						logging.debug("    - %s: %s" % (dt, pr))
 						if self.date >= self.min_date and self.date <= self.max_date and match(m.group("comment")):
 							dayjob += dt
-							print("    - %s: %s" % (dt, pr))
+							logger.debug("    - %s: %s" % (dt, pr))
 							self.entries.append((self.date, dt, pr))
 						continue
 
 					assert False, p
 
-				print("  - Day total: %s" % datetimeparse.timedelta_str(dayjob))
+				logger.debug("  - Day total: %s" % datetimeparse.timedelta_str(dayjob))
 
 		def depart(self, node):
-			print(node)
+			logger.debug(node)
 
 	class V_materials(object):
 		def __init__(self, document, date_range):
@@ -163,20 +167,20 @@ def process(filename, date_range, match_title=lambda x: True, match=lambda x: Tr
 			self.date_range = date_range
 			self.min_date = date_range[0]
 			self.max_date = date_range[1]
-			print(self.min_date)
-			print(self.max_date)
+			logger.debug(self.min_date)
+			logger.debug(self.max_date)
 
 		def visit(self, node):
-			#print(node)
+			#logger.debug(node)
 			pass
 
 		def dispatch_visit(self, node):
-			#print(node)
+			#logger.debug(node)
 			if node.__class__ == docutils.nodes.section:
 				title = node.children[0].rawsource
 				m = re.match(r"(?P<y>\d{4})-(?P<m>\d{2})-(?P<d>\d{2}) \((Mon|Tue|Wed|Thu|Fri|Sat|Sun)\)", title)
 				if m is None:
-					#print("Skipping %s" % title)
+					#logger.debug("Skipping %s" % title)
 					return
 				def toi(x): return int(m.group(x))
 				self.date = datetime.datetime(year=toi("y"), month=toi("m"), day=toi("d"))
@@ -188,14 +192,14 @@ def process(filename, date_range, match_title=lambda x: True, match=lambda x: Tr
 					return
 
 				assert self.date is not None, "Sonna bakana!"
-				print("- %s" % self.date.strftime("%Y-%m-%d"))
+				logger.debug("- %s" % self.date.strftime("%Y-%m-%d"))
 
 				assert node.children[1].__class__ == docutils.nodes.bullet_list, node.children[1]
 				entries = node.children[1].children
 
 				day_exp = 0
 
-				print("  - Entries:")
+				logger.debug("  - Entries:")
 				for entry in entries:
 					assert len(entry.children) == 1, entry
 					assert entry.children[0].__class__ == docutils.nodes.paragraph
@@ -207,17 +211,17 @@ def process(filename, date_range, match_title=lambda x: True, match=lambda x: Tr
 					if m is not None:
 						v = decimal.Decimal(m.group("amount"))
 						day_exp += v
-						print("    - %s: %s" % (v, pr))
+						logger.debug("    - %s: %s" % (v, pr))
 						if self.date >= self.min_date and self.date <= self.max_date:
 							self.entries.append((self.date, v))
 						continue
 
 					assert False, p
 
-				print("  - Day total: %s" % day_exp)
+				logger.debug("  - Day total: %s" % day_exp)
 
 		def depart(self, node):
-			print(node)
+			logger.debug(node)
 
 	visitor_time = V_time(document, date_range)
 	document.walk(visitor_time)

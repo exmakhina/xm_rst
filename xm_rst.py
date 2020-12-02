@@ -7,6 +7,8 @@ import sys, argparse, re, datetime, decimal, logging
 
 import datetimeparse
 
+logger = logging.getLogger()
+
 def printf(x):
 	sys.stdout.write(x)
 	sys.stdout.flush()
@@ -32,6 +34,10 @@ if __name__ == '__main__':
 	 description="reStructuredText helper",
 	)
 
+	parser.add_argument("--log-level",
+	 default="INFO",
+	 help="Logging level (eg. INFO, see Python logging docs)",
+	)
 
 	import xm_rst_log
 	choices = []
@@ -138,6 +144,16 @@ if __name__ == '__main__':
 
 	args = parser.parse_args()
 
+	logging.root.setLevel(getattr(logging, args.log_level))
+
+	logging.basicConfig()
+		
+	try:
+		import coloredlogs
+		coloredlogs.install(level=getattr(logging, args.log_level), logger=logger)
+	except ImportError:
+		pass
+
 	if args.command == 'log':
 		f = getattr(xm_rst_log, "log_" + args.logcommand)
 		type_xform = {
@@ -172,22 +188,24 @@ if __name__ == '__main__':
 			times, matxs = xm_rst_to_timesheet_estimation.process(args.filename, date_range, match_title, match)
 			total_times += times
 			total_matxs += matxs
+
 		total_time = datetime.timedelta()
-		print("Time Entries:")
 		for date, date_work, comment in total_times:
-			print("- %s: %s %s" % (date.strftime("%Y-%m-%d"), datetimeparse.timedelta_str(date_work), comment))
 			total_time += date_work
-		total_matx = decimal.Decimal(0)
-		print("Materials Entries:")
-		for date, date_mats in total_matxs:
-			print("- %s: %s" % (date.strftime("%Y-%m-%d"), date_mats))
-			total_matx += date_mats
 		hours = total_time.total_seconds() / (60.0*60)
 		note = ""
 		if args.rate:
 			note = " (%s)" % (decimal.Decimal(hours) * args.rate)
-		print("Time Total %.2f h%s" % (hours, note))
-		print("Materials Total %s" % (total_matx))
+		print("Time: {:.2f} h{}".format(hours, note))
+		for date, date_work, comment in total_times:
+			print("- %s: %s %s" % (date.strftime("%Y-%m-%d"), datetimeparse.timedelta_str(date_work), comment))
+
+		total_matx = decimal.Decimal(0)
+		for date, date_mats in total_matxs:
+			total_matx += date_mats
+		print("Materials: {}".format(total_matx))
+		for date, date_mats in total_matxs:
+			print("- %s: %s" % (date.strftime("%Y-%m-%d"), date_mats))
 
 	elif args.command == "ts":
 		xm_rst_log.log_echo(xm_rst_log.log_ts())
