@@ -119,6 +119,16 @@ if __name__ == '__main__':
 	 help="statistics on clipboard contents",
 	)
 
+	parser_xpath = subparsers.add_parser(
+	 'xpath',
+	 help="grepping and stuff",
+	)
+
+	parser_xpath.add_argument("filename",
+	)
+
+	parser_xpath.add_argument("expression",
+	)
 
 	try:
 		import argcomplete
@@ -181,6 +191,92 @@ if __name__ == '__main__':
 
 	elif args.command == "ts":
 		xm_rst_log.log_echo(xm_rst_log.log_ts())
+
+	elif args.command == "xpath":
+
+		import io, time
+		with io.open(args.filename, "r", encoding="utf-8") as f:
+			data = f.read()
+
+		import docutils.frontend
+		import docutils.parsers
+		import docutils.parsers.rst
+		import docutils.utils
+		import docutils.nodes
+
+		import lxml.etree
+
+		rawstrings = dict()
+
+		def element_as_lxml(self):
+			element = lxml.etree.Element(self.tagname)
+			for attribute, value in self.attlist():
+				if isinstance(value, list):
+					value = ' '.join([docutils.nodes.serial_escape('%s' % (v,)) for v in value])
+				if ":" in attribute:
+					logging.info("ignoring attribute %s = %s", attribute, value)
+					continue
+				element.set(attribute, '%s' % value)
+			last_sub = None
+			for idx_child, child in enumerate(self.children):
+				subelement = child.as_lxml()
+				if isinstance(subelement, str):
+					if idx_child == 0:
+						if element.text is None:
+							element.text = subelement
+						else:
+							element.text += subelement
+					else:
+						if last_sub.tail is None:
+							last_sub.tail = subelement
+						else:
+							last_sub.tail += subelement
+				else:
+					element.append(subelement)
+					last_sub = subelement
+
+			rawstrings[element] = self.rawsource
+			#print(lxml.etree.tostring(element))
+			return element
+
+		def text_as_lxml(self):
+			return self.astext()
+
+		docutils.nodes.Element.as_lxml = element_as_lxml
+		docutils.nodes.Text.as_lxml = text_as_lxml
+
+		settings = docutils.frontend.OptionParser(
+		 components=(docutils.parsers.rst.Parser,)) \
+		  .get_default_values()
+		document = docutils.utils.new_document(args.filename, settings)
+		parser = docutils.parsers.rst.Parser()
+		parser.parse(data, document)
+
+		root = document.as_lxml()
+
+		xpath = args.expression
+		ns = lxml.etree.FunctionNamespace(None)
+
+		# Simulate XPath 2.0 matches function
+		ns['matches'] = lambda ctx, text, pat: re.match(pat, text) is not None
+
+		results = root.xpath(xpath)
+		if len(results) != 0:
+			for idx_res, res in enumerate(results):
+				if len(results) != 1:
+					print("\x1B[35;1mResult {}/{}:\x1B[0m".format(idx_res+1, len(results)))
+				#print(lxml.etree.tostring(res))
+				text = rawstrings[res]
+				#print(text.replace("\n", " "))
+				for line in text.splitlines():
+					sys.stdout.write(line + "\n")
+					sys.stdout.flush()
+					time.sleep(0.1)
+
+				#print(text)
+		else:
+			print("\x1B[31;1mNo result\x1B[0m")
+
 	elif args.command == "clipboard":
 		if args.cb_command == "stats":
 			import subprocess
