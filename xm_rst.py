@@ -84,6 +84,11 @@ if __name__ == '__main__':
 	 help="Only match entries matching this regexp",
 	)
 
+	parser_timesheet.add_argument("--match-title",
+	 help="Only match adminition entries whose title matches this regexp",
+	 default=r"Hours - (?P<name>\S+)",
+	)
+
 	parser_timesheet.add_argument("filename",
 	 help="log file to process",
 	)
@@ -148,7 +153,13 @@ if __name__ == '__main__':
 			else:
 				match = lambda x: True
 
-			times, matxs = xm_rst_to_timesheet_estimation.process(args.filename, date_range, match)
+			if args.match_title:
+				def match_title(x):
+					return re.match(args.match_title, x) is not None
+			else:
+				match_title = lambda x: True
+
+			times, matxs = xm_rst_to_timesheet_estimation.process(args.filename, date_range, match_title, match)
 			total_times += times
 			total_matxs += matxs
 		total_time = datetime.timedelta()

@@ -12,7 +12,7 @@ import docutils.frontend
 
 import datetimeparse
 
-def process(filename, date_range, match=lambda x: True):
+def process(filename, date_range, match_title=lambda x: True, match=lambda x: True):
 	settings = docutils.frontend.OptionParser(
 	 components=(docutils.parsers.rst.Parser,)) \
 	 .get_default_values()
@@ -57,7 +57,7 @@ def process(filename, date_range, match=lambda x: True):
 
 			if node.__class__ == docutils.nodes.admonition:
 				title = node.children[0].rawsource
-				if not title.startswith("Hours - "):
+				if not match_title(title):
 					return
 
 				assert self.date is not None, "Sonna bakana!"
