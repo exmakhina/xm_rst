@@ -206,14 +206,15 @@ def process(filename, date_range, match_title=lambda x: True, match=lambda x: Tr
 					pr = entry.children[0].rawsource
 					p = pr.splitlines()[0]
 					pr = pr.replace("\n", " ")
-					re_a = r"^:materials:`(?P<amount>.*)\$`,?.*$"
+					re_a = r"^:materials:`(?P<amount>[\d.]+) ?(?P<currency>\S+)`,?.*$"
 					m = re.match(re_a, p)
 					if m is not None:
 						v = decimal.Decimal(m.group("amount"))
+						c = m.group("currency")
 						day_exp += v
 						logger.debug("    - %s: %s" % (v, pr))
 						if self.date >= self.min_date and self.date <= self.max_date:
-							self.entries.append((self.date, v))
+							self.entries.append((self.date, v, c))
 						continue
 
 					assert False, p

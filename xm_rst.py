@@ -4,7 +4,7 @@
 # ExMakhina reStructuredText timesheets stuff
 
 import sys, argparse, re, datetime, decimal, logging
-
+import collections
 import datetimeparse
 
 logger = logging.getLogger()
@@ -12,6 +12,13 @@ logger = logging.getLogger()
 def printf(x):
 	sys.stdout.write(x)
 	sys.stdout.flush()
+
+def amount(x):
+	try:
+		return decimal.Decimal(x), "$"
+	except decimal.InvalidOperation:
+		k, v = x.split()
+		return decimal.Decimal(k), v
 
 def ts_range(x):
 	if x is None:
@@ -69,13 +76,14 @@ if __name__ == '__main__':
 	 help="name to consider",
 	)
 
+
 	parser_timesheet = subparsers.add_parser(
 	 'timesheet',
 	 help="manage timesheet stuff (eg. counting hours)",
 	)
 
 	parser_timesheet.add_argument("--rate",
-	 type=decimal.Decimal,
+	 type=amount,
 	 help="hourly rate",
 	)
 
@@ -97,7 +105,9 @@ if __name__ == '__main__':
 
 	parser_timesheet.add_argument("filename",
 	 help="log file to process",
+	 nargs="+",
 	)
+
 
 	parser_ts = subparsers.add_parser(
 	 'ts',
@@ -125,6 +135,7 @@ if __name__ == '__main__':
 	 help="statistics on clipboard contents",
 	)
 
+
 	parser_xpath = subparsers.add_parser(
 	 'xpath',
 	 help="grepping and stuff",
@@ -135,6 +146,7 @@ if __name__ == '__main__':
 
 	parser_xpath.add_argument("expression",
 	)
+
 
 	try:
 		import argcomplete
@@ -175,6 +187,7 @@ if __name__ == '__main__':
 		for date_range in args.range:
 			if args.match:
 				def match(x):
+					logger.debug("Match %s: %s?", args.match, x)
 					return re.match(args.match, x) is not None
 			else:
 				match = lambda x: True
@@ -185,9 +198,18 @@ if __name__ == '__main__':
 			else:
 				match_title = lambda x: True
 
-			times, matxs = xm_rst_to_timesheet_estimation.process(args.filename, date_range, match_title, match)
-			total_times += times
-			total_matxs += matxs
+			for filename in args.filename:
+				try:
+					times, matxs = xm_rst_to_timesheet_estimation.process(filename, date_range, match_title, match)
+				except Exception as e:
+					logger.exception("When processing %s: %s", filename, e)
+					continue
+
+				total_times += times
+				total_matxs += matxs
+
+		total_times.sort()
+		total_matxs.sort()
 
 		total_time = datetime.timedelta()
 		for date, date_work, comment in total_times:
@@ -195,17 +217,20 @@ if __name__ == '__main__':
 		hours = total_time.total_seconds() / (60.0*60)
 		note = ""
 		if args.rate:
-			note = " (%s)" % (decimal.Decimal(hours) * args.rate)
+			rate, currency = args.rate
+			note = " ({} {})".format(decimal.Decimal(hours) * rate, currency)
 		print("Time: {:.2f} h{}".format(hours, note))
+
 		for date, date_work, comment in total_times:
 			print("- %s: %s %s" % (date.strftime("%Y-%m-%d"), datetimeparse.timedelta_str(date_work), comment))
 
-		total_matx = decimal.Decimal(0)
-		for date, date_mats in total_matxs:
-			total_matx += date_mats
-		print("Materials: {}".format(total_matx))
-		for date, date_mats in total_matxs:
-			print("- %s: %s" % (date.strftime("%Y-%m-%d"), date_mats))
+		# Cumulate materials
+		total_matx = collections.defaultdict(lambda: decimal.Decimal(0))
+		for date, date_mats, currency in total_matxs:
+			total_matx[currency] += date_mats
+		print("Materials: {}".format(", ".join(f"{v} {k}" for (k, v) in total_matx.items())))
+		for date, date_mats, currency in total_matxs:
+			print("- %s: %s %s" % (date.strftime("%Y-%m-%d"), date_mats, currency))
 
 	elif args.command == "ts":
 		xm_rst_log.log_echo(xm_rst_log.log_ts())
