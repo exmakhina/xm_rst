@@ -74,14 +74,29 @@ def process(filename, date_range, match_title=lambda x: True, match=lambda x: Tr
 
 				logger.debug("  - Entries:")
 				for entry in entries:
-					if len(entry.children) != 1 \
-					 or entry.children[0].__class__ != docutils.nodes.paragraph:
-						raise RuntimeError("Entry should be a single paragraph, not {} in {}\n {}".format(entry.children[0].__class__, self.date, entry.children[0].rawsource))
 
-					pr = entry.children[0].rawsource
-					p = pr.replace("\n", " ")#.splitlines()[0]
-					pr = pr.replace("\n", " ")
-					re_a = r"^From :time:`(?P<from>\d{2}:\d{2}:\d{2})` to :time:`(?P<to>\d{2}:\d{2}:\d{2})`,?(?P<comment>.*)$"
+					logger.debug("    - Entry:")
+					for idx_entry, c in enumerate(entry.children):
+						if idx_entry == 0 and not isinstance(c, docutils.nodes.paragraph):
+							raise RuntimeError(c.rawsource)
+						logger.debug("        - Child %s", c)
+
+					pr = entry.children[0].rawsource.replace("\n", " ") + entry.rawsource[len(entry.children[0].rawsource)+1:].replace("\n", "\\n")
+
+					def cleanup(s):
+						p_jira = re.compile("https://\S+.atlassian.net/browse/")
+						s = p_jira.sub(lambda m: "", s)
+
+						p_gitlab = re.compile("https://gitlab.com/(?P<path>\S+?)/-/merge_requests/(?P<n>\S+)")
+						s = p_gitlab.sub(lambda m: m.group("path") + "!" + m.group("n"), s)
+
+						return s
+
+					pr = cleanup(pr)
+
+					p = pr
+
+					re_a = r"^From :time:`(?P<from>\d{2}:\d{2}:\d{2})` to :time:`(?P<to>\d{2}:\d{2}:\d{2})`[,:]?(?P<comment>.*)$"
 					m = re.match(re_a, p)
 					if m is not None:
 						tsf = m.group("from")
@@ -107,7 +122,7 @@ def process(filename, date_range, match_title=lambda x: True, match=lambda x: Tr
 							self.entries.append((self.date, dt, pr))
 						continue
 
-					re_a = r"^From :time:`(?P<from>\d{2}:\d{2})` to :time:`(?P<to>\d{2}:\d{2})`( less :time:`((?P<h>\d+(\.\d+)?)h)?((?P<m>\d+)m?)?`)?,?(?P<comment>.*)$"
+					re_a = r"^From :time:`(?P<from>\d{2}:\d{2})` to :time:`(?P<to>\d{2}:\d{2})`( less :time:`((?P<h>\d+(\.\d+)?)h)?((?P<m>\d+)m?)?`)?[,:]?(?P<comment>.*)$"
 					m = re.match(re_a, p)
 					if m is not None:
 						tsf = m.group("from")
@@ -138,7 +153,7 @@ def process(filename, date_range, match_title=lambda x: True, match=lambda x: Tr
 							self.entries.append((self.date, dt, pr))
 						continue
 
-					re_a = r"^Estimated :time:`((?P<h>\d+(\.\d+)?)h)?((?P<m>\d+)m?)?`,?\s*(?P<comment>.*)$"
+					re_a = r"^Estimated :time:`((?P<h>\d+(\.\d+)?)h)?((?P<m>\d+)m?)?`[,:]?\s*(?P<comment>.*)$"
 					m = re.match(re_a, p)
 					if m is not None:
 						d = dict(m.groupdict())
